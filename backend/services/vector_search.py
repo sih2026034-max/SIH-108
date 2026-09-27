@@ -1,9 +1,15 @@
 import os
 import json
-import faiss
 import numpy as np
 from pydantic import BaseModel
 from typing import List, Optional
+
+try:
+    import faiss
+    HAS_FAISS = True
+except ImportError:
+    HAS_FAISS = False
+    print("Warning: faiss-cpu not found or failed to load. Will use lexical fallback.")
 
 VECTOR_DIR = "data/vector_store"
 MODEL_NAME = "intfloat/multilingual-e5-base"
@@ -28,7 +34,8 @@ class VectorSearchService:
             return False
             
         try:
-            self.index = faiss.read_index(index_path)
+            if HAS_FAISS:
+                self.index = faiss.read_index(index_path)
             with open(meta_path, "r", encoding="utf-8") as f:
                 self.metadata = json.load(f)
             with open(config_path, "r", encoding="utf-8") as f:
