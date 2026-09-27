@@ -382,28 +382,10 @@ export default function SearchPage() {
       await sleep(500);
       
       // We do NOT invent BIS standards, we just pass the extracted text to our existing robust recommendation engine
-      const recs = getRecommendations(combined);
-      
-      if (recs) {
-        setResults(recs.standards);
-        setAnalysis({
-          category: recs.detectedProduct,
-          specifications: recs.detectedSpecifications,
-          sector: recs.sector,
-          confidence: recs.confidence
-        });
-        setTenders(recs.tenders);
-        saveToHistory("Doc: " + (data.extracted.productName !== "Not detected" ? data.extracted.productName : selectedFile.name), recs.standards, recs.tenders, recs.detectedProduct, recs.standards[0]?.isNumber || "N/A");
-      } else {
-        setResults([]);
-        setAnalysis(null);
-        setTenders([]);
-        saveToHistory("Doc: " + selectedFile.name, [], [], "No match", "N/A");
-      }
+      await handleSearch(undefined, combined);
       
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during extraction.");
-    } finally {
       setLoading(false);
       setSearched(true);
     }
