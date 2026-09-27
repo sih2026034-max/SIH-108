@@ -1,0 +1,104 @@
+[
+  {
+    "department_id": "LITD",
+    "department_name": "Electronics And Information Technology Department",
+    "record_count": 1220,
+    "source_mapping": "LITD"
+  },
+  {
+    "department_id": "MTD",
+    "department_name": "Metallurgical Engineering Department",
+    "record_count": 755,
+    "source_mapping": "MTD"
+  },
+  {
+    "department_id": "MHD",
+    "department_name": "Medical Equipment And Hospital Planning Department",
+    "record_count": 1238,
+    "source_mapping": "MHD"
+  },
+  {
+    "department_id": "CED",
+    "department_name": "Civil Engineering Department",
+    "record_count": 939,
+    "source_mapping": "CED"
+  },
+  {
+    "department_id": "TXD",
+    "department_name": "Textile Department",
+    "record_count": 753,
+    "source_mapping": "TXD"
+  },
+  {
+    "department_id": "PCD",
+    "department_name": "Petroleum, Coal And Related Products Department",
+    "record_count": 671,
+    "source_mapping": "PCD"
+  },
+  {
+    "department_id": "FAD",
+    "department_name": "Food And Agriculture Department",
+    "record_count": 1244,
+    "source_mapping": "FAD"
+  },
+  {
+    "department_id": "CHD",
+    "department_name": "Chemical Department",
+    "record_count": 959,
+    "source_mapping": "CHD"
+  },
+  {
+    "department_id": "PGD",
+    "department_name": "Production And General Engineering Department",
+    "record_count": 1498,
+    "source_mapping": "PGD"
+  },
+  {
+    "department_id": "ETD",
+    "department_name": "Electrotechnical Department",
+    "record_count": 1236,
+    "source_mapping": "ETD"
+  },
+  {
+    "department_id": "MED",
+    "department_name": "Mechanical Engineering Department",
+    "record_count": 731,
+    "source_mapping": "MED"
+  },
+  {
+    "department_id": "WRD",
+    "department_name": "Water Resources Department",
+    "record_count": 226,
+    "source_mapping": "WRD"
+  },
+  {
+    "department_id": "AYD",
+    "department_name": "Ayush Department",
+    "record_count": 339,
+    "source_mapping": "AYD"
+  },
+  {
+    "department_id": "MSD",
+    "department_name": "Management System Department",
+    "record_count": 399,
+    "source_mapping": "MSD"
+  },
+  {
+    "department_id": "EED",
+    "department_name": "Environment And Ecology Department",
+    "record_count": 108,
+    "source_mapping": "EED"
+  },
+  {
+    "department_id": "SSD",
+    "department_name": "Service Sector Department",
+    "record_count": 173,
+    "source_mapping": "SSD"
+  },
+  {
+    "department_id": "UNKNOWN",
+    "department_name": "UNKNOWN",
+    "record_count": 5,
+    "source_mapping": "UNKNOWN"
+  }
+]

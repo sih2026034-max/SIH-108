@@ -1,0 +1,14 @@
+query,expected_is_number,predicted_is_number,expected_category,predicted_category,standard_correct,category_correct,confidence,status
+5 hp water pump,IS 9079,IS 8034:2018,Pumps,Submersible Pump,false,false,0.725,Incorrect
+submersible pump,IS 8034:2018,IS 8034:2018,Pumps,Submersible Pump,true,false,0.7250000000000001,Correct
+TMT reinforcement steel,IS 1786:2008,IS 1786:2008,Steel,TMT Steel,true,false,0.65,Correct
+power transformer,IS 2026,IS 2026,Transformers,Power Transformer,true,false,0.7250000000000001,Correct
+5 HP पानी का पंप,IS 9079,NONE,Pumps,NONE,false,false,0,Incorrect
+सबमर्सिबल पंप,IS 8034:2018,NONE,Pumps,NONE,false,false,0,Incorrect
+सीमेंट,IS 269,NONE,Cement,NONE,false,false,0,Incorrect
+ट्रांसफार्मर,IS 2026,NONE,Transformers,NONE,false,false,0,Incorrect
+Portland cement,IS 269,IS 269,Cement,Ordinary Portland Cement,true,false,0.675,Correct
+solar pv module,IS 14286,IS 14286,Solar,Solar PV Module,true,false,0.8,Correct
+PVC insulated cable,IS 694,IS 694,Electrical Cables,PVC Insulated Cable,true,false,0.8,Correct
+switchgear,IS/IEC 60947,IS/IEC 60947,Switchgear,Low-Voltage Switchgear,true,false,0.65,Correct
+unknown imaginary product,REQUIRES_VERIFICATION,NONE,Unknown,NONE,false,false,0,Incorrect

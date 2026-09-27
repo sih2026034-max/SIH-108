@@ -1,0 +1,32 @@
+# Data Quality Report
+- Total records: 12494
+- Total departments: 17
+- Records per department:
+  - LITD: 1220
+  - MTD: 755
+  - MHD: 1238
+  - CED: 939
+  - TXD: 753
+  - PCD: 671
+  - FAD: 1244
+  - CHD: 959
+  - PGD: 1498
+  - ETD: 1236
+  - MED: 731
+  - WRD: 226
+  - AYD: 339
+  - MSD: 399
+  - EED: 108
+  - SSD: 173
+  - UNKNOWN: 5
+- Missing scope count: 11853
+- Missing description count: 12494
+- Missing keywords count: 12494
+- Missing ICS code count: 9571
+- Missing cross-reference count: 12067
+- Missing status count: 12494
+- Missing edition/year count: 7
+- Duplicate count: 0
+- Invalid records (missing standard number): 5
+- Empty records: 0
+- Average Data Completeness: 33.18%

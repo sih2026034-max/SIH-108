@@ -1,0 +1,14 @@
+query,expected_is_number,expected_category,language
+5 hp water pump,IS 9079,Pumps,English
+submersible pump,IS 8034:2018,Pumps,English
+TMT reinforcement steel,IS 1786:2008,Steel,English
+power transformer,IS 2026,Transformers,English
+5 HP पानी का पंप,IS 9079,Pumps,Hindi
+सबमर्सिबल पंप,IS 8034:2018,Pumps,Hindi
+सीमेंट,IS 269,Cement,Hindi
+ट्रांसफार्मर,IS 2026,Transformers,Hindi
+Portland cement,IS 269,Cement,English
+solar pv module,IS 14286,Solar,English
+PVC insulated cable,IS 694,Electrical Cables,English
+switchgear,IS/IEC 60947,Switchgear,English
+unknown imaginary product,REQUIRES_VERIFICATION,Unknown,English

@@ -1,0 +1,915 @@
+"use client";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+
+import { getRecommendations } from "../services/recommendationEngine";
+import { INDIAN_STANDARDS_DB } from "../data/indianStandards";
+import { TENDERS_DB, TenderMatch } from "../data/tenders";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+interface HistoryEntry {
+  id: string;
+  query: string;
+  timestamp: string;
+  standardsFound: number;
+  tendersFound: number;
+  detectedCategory: string;
+  topStandard: string;
+}
+
+interface RecentDoc {
+  name: string;
+  type: "pdf" | "docx";
+  time: string;
+}
+
+/* ──────────────────────────────────────────────
+   SVG Icons used within the page
+   ────────────────────────────────────────────── */
+function IconStandards() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+    </svg>
+  );
+}
+function IconCheckCircle() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+function IconLink() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
+  );
+}
+function IconLayers() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 2 7 12 12 22 7 12 2" />
+      <polyline points="2 17 12 22 22 17" />
+      <polyline points="2 12 12 17 22 12" />
+    </svg>
+  );
+}
+function IconSparkle() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  );
+}
+
+export default function SearchPage() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [tenders, setTenders] = useState<TenderMatch[]>([]);
+  const [analysis, setAnalysis] = useState<any>(null);
+  
+  const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState("");
+  const [searched, setSearched] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'quick' | 'manual' | 'upload'>('quick');
+
+  // Manual Input States
+  const [productName, setProductName] = useState("");
+  const [productDesc, setProductDesc] = useState("");
+  const [techSpecs, setTechSpecs] = useState("");
+  const [tenderText, setTenderText] = useState("");
+
+  // Category/Sub-category selectors
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
+
+  // Upload States
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [extractedData, setExtractedData] = useState<any>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Recent documents (demo)
+  const [recentDocs] = useState<RecentDoc[]>([
+    { name: "Tender_Spec_Lighting.pdf", type: "pdf", time: "2 hours ago" },
+    { name: "Electrical_Equipment.docx", type: "docx", time: "1 day ago" },
+    { name: "Construction_Materials.pdf", type: "pdf", time: "2 days ago" },
+    { name: "Water_Supply_Pipe_DOC.docx", type: "docx", time: "3 days ago" },
+  ]);
+
+  // Character count for textarea
+  const [descCharCount, setDescCharCount] = useState(0);
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("isrecommend_history");
+      if (saved) setHistory(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  function saveToHistory(q: string, stds: any[], tnds: TenderMatch[], cat: string, topIS: string) {
+    const entry: HistoryEntry = {
+      id: Date.now().toString(),
+      query: q,
+      timestamp: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      standardsFound: stds.length,
+      tendersFound: tnds.length,
+      detectedCategory: cat,
+      topStandard: topIS,
+    };
+    const updated = [entry, ...history].slice(0, 50);
+    setHistory(updated);
+    localStorage.setItem("isrecommend_history", JSON.stringify(updated));
+  }
+
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  async function handleSearch(e?: React.FormEvent, forceQuery?: string) {
+    if (e) e.preventDefault();
+    const q = forceQuery || query;
+    if (!q.trim()) {
+      setErrorMsg("Please enter a procurement requirement.");
+      return;
+    }
+    
+    setErrorMsg("");
+    setLoading(true);
+    setSearched(false);
+    
+    setLoadingStep("Analyzing procurement requirement...");
+    await sleep(400);
+    setLoadingStep("Detecting product category...");
+    await sleep(400);
+    setLoadingStep("Matching Indian Standards...");
+    await sleep(400);
+    setLoadingStep("Finding relevant tenders...");
+    await sleep(400);
+
+    const recs = getRecommendations(q);
+
+    if (recs) {
+      setResults(recs.standards);
+      setAnalysis({
+        category: recs.detectedProduct,
+        specifications: recs.detectedSpecifications,
+        sector: recs.sector,
+        confidence: recs.confidence
+      });
+      setTenders(recs.tenders);
+      saveToHistory(q, recs.standards, recs.tenders, recs.detectedProduct, recs.standards[0]?.isNumber || "N/A");
+    } else {
+      setResults([]);
+      setAnalysis(null);
+      setTenders([]);
+      saveToHistory(q, [], [], "No match", "N/A");
+    }
+
+    setLoading(false);
+    setSearched(true);
+  }
+
+  async function handleManualSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!productName.trim()) {
+      setErrorMsg("Product Name is required.");
+      return;
+    }
+    if (!productDesc.trim() && !techSpecs.trim() && !tenderText.trim()) {
+      setErrorMsg("Please provide at least one additional detail (Description, Specs, or Tender Text).");
+      return;
+    }
+    setErrorMsg("");
+    
+    const combinedQuery = `${productName} ${productDesc} ${techSpecs} ${tenderText}`;
+    setExtractedData(null);
+    handleSearch(undefined, combinedQuery);
+  }
+
+  function processFile(file: File) {
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|docx|txt)$/i)) {
+      setErrorMsg("Unsupported file format. Please upload PDF, DOCX, or TXT.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg("File is too large. Maximum size is 10MB.");
+      return;
+    }
+    setSelectedFile(file);
+    setErrorMsg("");
+  }
+
+  async function handleAnalyzeDocument() {
+    if (!selectedFile) return;
+    
+    setLoading(true);
+    setSearched(false);
+    setErrorMsg("");
+    setLoadingStep("Uploading document...");
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      
+      setLoadingStep("Extracting text and identifying product info...");
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to process document");
+      }
+      
+      setLoadingStep("Structuring product input...");
+      await sleep(500);
+      
+      setExtractedData(data.extracted);
+      
+      const combined = `${data.extracted.productName} ${data.extracted.productDescription} ${data.extracted.technicalSpecifications} ${data.extracted.rawText}`;
+      
+      setLoadingStep("Matching BIS standards...");
+      await sleep(500);
+      
+      // We do NOT invent BIS standards, we just pass the extracted text to our existing robust recommendation engine
+      const recs = getRecommendations(combined);
+      
+      if (recs) {
+        setResults(recs.standards);
+        setAnalysis({
+          category: recs.detectedProduct,
+          specifications: recs.detectedSpecifications,
+          sector: recs.sector,
+          confidence: recs.confidence
+        });
+        setTenders(recs.tenders);
+        saveToHistory("Doc: " + (data.extracted.productName !== "Not detected" ? data.extracted.productName : selectedFile.name), recs.standards, recs.tenders, recs.detectedProduct, recs.standards[0]?.isNumber || "N/A");
+      } else {
+        setResults([]);
+        setAnalysis(null);
+        setTenders([]);
+        saveToHistory("Doc: " + selectedFile.name, [], [], "No match", "N/A");
+      }
+      
+    } catch (err: any) {
+      setErrorMsg(err.message || "An error occurred during extraction.");
+    } finally {
+      setLoading(false);
+      setSearched(true);
+    }
+  }
+
+  const handleChipClick = (term: string) => {
+    setQuery(term);
+    handleSearch(undefined, term);
+  };
+
+  const popularSearches = [
+    "5 hp water pumps", "construction material", "uPVC pipes", "transformer", "solar PV", "centrifugal pump"
+  ];
+
+  const categories = [
+    { value: "civil", label: "Civil & Construction" },
+    { value: "electrical", label: "Electrical & Electronics" },
+    { value: "mechanical", label: "Mechanical Engineering" },
+    { value: "chemical", label: "Chemicals & Polymers" },
+    { value: "water", label: "Water Supply & Sanitation" },
+    { value: "consumer", label: "Consumer Products" },
+  ];
+
+  const domains = [
+    { title: "Civil & Construction Materials", icon: "🏗️", standards: "2,450 Standards", count: 2450, color: "from-amber-50 to-orange-50", border: "border-amber-200" },
+    { title: "Electrical & Electronics", icon: "⚡", standards: "3,820 Standards", count: 3820, color: "from-blue-50 to-indigo-50", border: "border-blue-200" },
+    { title: "Mechanical Engineering", icon: "⚙️", standards: "2,310 Standards", count: 2310, color: "from-gray-50 to-slate-50", border: "border-gray-200" },
+    { title: "Chemicals & Polymers", icon: "🧪", standards: "1,950 Standards", count: 1950, color: "from-green-50 to-emerald-50", border: "border-green-200" },
+    { title: "Water Supply & Sanitation", icon: "💧", standards: "1,780 Standards", count: 1780, color: "from-cyan-50 to-sky-50", border: "border-cyan-200" },
+    { title: "Consumer Products", icon: "🏠", standards: "3,120 Standards", count: 3120, color: "from-purple-50 to-violet-50", border: "border-purple-200" },
+  ];
+
+  const stats = [
+    {
+      label: "Total Indian Standards (IS) Available",
+      value: "23,456",
+      icon: <IconStandards />,
+      iconBg: "bg-[#0B3558]",
+      iconColor: "text-white",
+      underline: "bg-[#0B3558]",
+    },
+    {
+      label: "Latest Standards (2020 – 2025)",
+      value: "4,872",
+      icon: <IconCheckCircle />,
+      iconBg: "bg-[#16A34A]",
+      iconColor: "text-white",
+      underline: "bg-[#16A34A]",
+    },
+    {
+      label: "Allied & Normative References",
+      value: "18,320",
+      icon: <IconLink />,
+      iconBg: "bg-[#F28C18]",
+      iconColor: "text-white",
+      underline: "bg-[#F28C18]",
+    },
+    {
+      label: "Product Categories Covered",
+      value: "520+",
+      icon: <IconLayers />,
+      iconBg: "bg-[#6366F1]",
+      iconColor: "text-white",
+      underline: "bg-[#6366F1]",
+    },
+  ];
+
+  return (
+    <div className="font-sans text-[#172033] min-h-screen bg-[#EEF2F7]">
+      {/* ═══════════════════════════════════════════
+          HERO BANNER
+          ═══════════════════════════════════════════ */}
+      <div className="relative w-full h-[220px] md:h-[260px] bg-cover bg-center bg-no-repeat overflow-hidden border-b border-gray-200" style={{ backgroundImage: 'url("/login-bg.jpg")' }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent"></div>
+        <div className="relative h-full max-w-[1400px] mx-auto px-6 sm:px-8 flex items-center justify-between">
+          <div className="max-w-3xl pt-2">
+            <h1 className="text-3xl md:text-5xl font-extrabold text-[#0B3558] tracking-tight mb-2">IS-Recommend</h1>
+            <h2 className="text-lg md:text-xl font-bold text-[#1a4a8a] mb-3">Indian Standards Recommendation & Tender Matching Platform</h2>
+            <p className="text-sm md:text-base text-gray-700 font-medium max-w-2xl leading-relaxed">
+              AI-powered assistance for procurement officials to identify the most relevant Indian Standards (IS) while preparing tender specifications.
+            </p>
+          </div>
+          
+          <div className="hidden lg:block bg-white/95 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50 max-w-xs transform translate-y-4">
+            <p className="text-[#0B3558] font-bold text-sm leading-snug">
+              Ensuring Quality,<br/>Safety and Reliability<br/>Through Indian Standards
+            </p>
+            <div className="flex mt-3 h-[3px] rounded-full overflow-hidden w-16">
+              <div className="flex-1 bg-[#FF9933]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#138808]" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 max-w-[1400px] mx-auto space-y-6">
+      
+        {/* ═══════════════════════════════════════════
+            Executive Stats Row
+            ═══════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, i) => (
+          <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden">
+            <div className={`w-12 h-12 rounded-xl ${stat.iconBg} ${stat.iconColor} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform`}>
+              {stat.icon}
+            </div>
+            <div>
+              <p className="text-[11px] text-[#667085] font-semibold uppercase tracking-wide leading-tight mb-1">{stat.label}</p>
+              <p className="text-2xl font-black text-[#0B3558] tracking-tight">{stat.value}</p>
+            </div>
+            <div className={`absolute bottom-0 left-0 right-0 h-[3px] ${stat.underline}`} />
+          </div>
+        ))}
+      </div>
+
+      {/* ═══════════════════════════════════════════
+          Main Content Grid (Search + Right Panel)
+          ═══════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* ─────────── LEFT: AI Recommendation Panel ─────────── */}
+        <div id="analysis-section" className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="px-7 pt-6 pb-4 flex justify-between items-center">
+            <h2 className="text-xl font-bold text-[#0B3558] flex items-center gap-2.5">
+              <span className="text-[#F28C18]"><IconSparkle /></span>
+              AI-Powered Standard Recommendation
+            </h2>
+            <span className="px-3 py-1 bg-[#dcfce7] text-[#16A34A] text-[11px] font-bold rounded-md uppercase tracking-wider">
+              NLP Engine
+            </span>
+          </div>
+
+          <p className="px-7 text-[#667085] text-sm mb-5 leading-relaxed">
+            Enter a product description, technical specification or upload a tender document to get the most relevant Indian Standards (IS) and related standards.
+          </p>
+
+          {/* TABS */}
+          <div className="flex border-b border-gray-200 mx-7 gap-0">
+            {[
+              { key: 'quick', label: 'Quick Search', icon: '🔍' },
+              { key: 'manual', label: 'Product Input', icon: '📝' },
+              { key: 'upload', label: 'Document Upload', icon: '📄' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as any)}
+                className={`pb-3 px-5 text-sm font-semibold transition-all border-b-2 flex items-center gap-1.5
+                  ${activeTab === tab.key
+                    ? "border-[#0B3558] text-[#0B3558]"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
+              >
+                <span className="text-sm">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          <div className="px-7 py-6 flex-1">
+            {activeTab === 'quick' && (
+              <div className="animate-in fade-in duration-300 space-y-5">
+                <form onSubmit={(e) => { setExtractedData(null); handleSearch(e); }} className="space-y-4">
+                  <textarea
+                    value={query}
+                    onChange={(e) => { setQuery(e.target.value); setDescCharCount(e.target.value.length); }}
+                    placeholder="Describe your product, technical specification or procurement requirement..."
+                    rows={3}
+                    maxLength={1000}
+                    className="w-full px-4 py-3.5 rounded-xl bg-[#F5F7FA] border border-gray-300 text-[#172033] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0B3558] focus:border-[#0B3558] transition-all resize-none text-sm"
+                  />
+                  <p className="text-right text-[11px] text-gray-400 -mt-2">{descCharCount}/1000</p>
+                  
+                  <p className="text-xs text-gray-400 -mt-2">
+                    e.g. 11 kV transformer, solar street light, cement, uPVC pipe, fire extinguisher, office furniture, etc.
+                  </p>
+
+                  {/* Category Dropdowns */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#0B3558] mb-1.5">Product Category (Optional)</label>
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-[#F5F7FA] border border-gray-300 text-sm text-[#172033] focus:outline-none focus:ring-2 focus:ring-[#0B3558] focus:border-[#0B3558] appearance-none"
+                        style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")", backgroundPosition: "right 0.5rem center", backgroundRepeat: "no-repeat", backgroundSize: "1.5em 1.5em" }}
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#0B3558] mb-1.5">Sub Category (Optional)</label>
+                      <select
+                        value={selectedSubCategory}
+                        onChange={(e) => setSelectedSubCategory(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-[#F5F7FA] border border-gray-300 text-sm text-[#172033] focus:outline-none focus:ring-2 focus:ring-[#0B3558] focus:border-[#0B3558] appearance-none"
+                        style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")", backgroundPosition: "right 0.5rem center", backgroundRepeat: "no-repeat", backgroundSize: "1.5em 1.5em" }}
+                      >
+                        <option value="">Select Sub Category</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* CTA Button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#0B3558] to-[#1565C0] text-white font-bold text-sm tracking-wide hover:from-[#092a47] hover:to-[#1256a3] active:scale-[0.99] transition-all disabled:opacity-50 shadow-md flex items-center justify-center gap-2"
+                  >
+                    <IconSparkle />
+                    Get Recommended Standards
+                  </button>
+                </form>
+                
+                {/* Popular Searches */}
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-[#667085] mr-1 text-xs font-medium">Popular searches:</span>
+                  {popularSearches.map(term => (
+                    <button 
+                      key={term} 
+                      type="button"
+                      onClick={() => handleChipClick(term)}
+                      className="px-3 py-1 bg-[#F5F7FA] hover:bg-[#e8ecf2] text-[#0B3558] rounded-md transition-colors border border-gray-200 text-xs font-medium"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'manual' && (
+              <form onSubmit={handleManualSearch} className="animate-in fade-in duration-300 space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-[#0B3558] mb-1">Product Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                    placeholder='e.g. "PVC Insulated Electrical Cable"'
+                    className="w-full px-4 py-3 rounded-lg bg-[#F5F7FA] border border-gray-300 text-[#172033] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0B3558] focus:border-[#0B3558]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#0B3558] mb-1">Product Description</label>
+                  <textarea
+                    value={productDesc}
+                    onChange={(e) => setProductDesc(e.target.value)}
+                    placeholder='e.g. "PVC insulated copper electrical cable used for domestic wiring"'
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-lg bg-[#F5F7FA] border border-gray-300 text-[#172033] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0B3558] focus:border-[#0B3558]"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-[#0B3558] mb-1">Technical Specifications</label>
+                    <textarea
+                      value={techSpecs}
+                      onChange={(e) => setTechSpecs(e.target.value)}
+                      placeholder='Material, Voltage, Size, Grade, Capacity...'
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-lg bg-[#F5F7FA] border border-gray-300 text-[#172033] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0B3558] focus:border-[#0B3558]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-[#0B3558] mb-1">Tender / Procurement Text</label>
+                    <textarea
+                      value={tenderText}
+                      onChange={(e) => setTenderText(e.target.value)}
+                      placeholder='Paste complete tender or procurement requirement text here...'
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-lg bg-[#F5F7FA] border border-gray-300 text-[#172033] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0B3558] focus:border-[#0B3558]"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full md:w-auto px-8 py-3 mt-2 rounded-xl bg-gradient-to-r from-[#0B3558] to-[#1565C0] text-white font-bold tracking-wide hover:from-[#092a47] hover:to-[#1256a3] transition-all disabled:opacity-50 shadow-md flex items-center gap-2"
+                >
+                  <IconSparkle />
+                  Analyze Product
+                </button>
+              </form>
+            )}
+
+            {activeTab === 'upload' && (
+              <div className="animate-in fade-in duration-300 text-center">
+                <label 
+                  className={`block w-full border-2 border-dashed rounded-xl p-10 transition-all cursor-pointer group ${isDragging ? 'border-[#0B3558] bg-blue-50' : 'border-gray-300 hover:border-[#0B3558] hover:bg-blue-50/30'}`}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                      processFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                >
+                  <input type="file" className="hidden" accept=".pdf,.docx,.txt" onChange={(e) => { if(e.target.files) processFile(e.target.files[0]); }} />
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">📄</div>
+                  <h3 className="text-lg font-bold text-[#0B3558] mb-1">Upload Tender / Product Document</h3>
+                  <p className="text-sm text-[#667085] mb-4">Supported formats: PDF, DOCX, TXT (Max 10MB)</p>
+                  <span className="px-5 py-2.5 bg-[#0B3558] text-white text-sm font-bold rounded-lg shadow-sm">
+                    Browse Files
+                  </span>
+                </label>
+                
+                {selectedFile && (
+                  <div className="mt-6 flex items-center justify-between p-4 bg-[#F5F7FA] border border-gray-200 rounded-xl text-left">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <span className="text-2xl">📎</span>
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-bold text-[#0B3558] truncate">{selectedFile.name}</p>
+                        <p className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type || "Document"}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setSelectedFile(null)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {selectedFile && (
+                  <div className="mt-4 text-left">
+                    <button
+                      onClick={handleAnalyzeDocument}
+                      disabled={loading}
+                      className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-[#0B3558] to-[#1565C0] text-white font-bold tracking-wide hover:from-[#092a47] hover:to-[#1256a3] transition-all disabled:opacity-50 shadow-md"
+                    >
+                      Analyze Document
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Loader and Error Messages */}
+            {errorMsg && <p className="text-red-500 text-sm mt-4 font-semibold">{errorMsg}</p>}
+            {loading && (
+              <div className="mt-6 p-4 bg-blue-50 border border-[#0B3558]/20 rounded-xl flex items-center gap-4 animate-in fade-in">
+                <div className="w-5 h-5 border-2 border-[#0B3558] border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-[#0B3558] text-sm font-semibold">{loadingStep}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ─────────── RIGHT: Recent Searches & Documents ─────────── */}
+        <div className="space-y-5">
+          {/* Recent Searches */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-bold text-[#0B3558] flex items-center gap-2">
+                🔍 Recent Searches
+              </h3>
+              <Link href="/history" className="text-[11px] font-semibold text-[#1565C0] hover:underline flex items-center gap-0.5">
+                View All <span>→</span>
+              </Link>
+            </div>
+            <div className="space-y-2.5">
+              {history.length === 0 ? (
+                <>
+                  {/* Show placeholder items */}
+                  {["LED street light specification", "11 kV transformer", "uPVC pipes for water supply", "Fire extinguisher", "Office furniture"].map((item, i) => (
+                    <button
+                      key={item}
+                      onClick={() => handleChipClick(item)}
+                      className="w-full flex items-center justify-between py-2 px-1 hover:bg-[#F5F7FA] rounded-lg transition-colors group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="8" />
+                          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <span className="text-[13px] text-[#344054] group-hover:text-[#0B3558] transition-colors">{item}</span>
+                      </div>
+                      <span className="text-[10px] text-gray-400">{i === 0 ? "2 hours ago" : i === 1 ? "5 hours ago" : i === 2 ? "1 day ago" : i === 3 ? "2 days ago" : "3 days ago"}</span>
+                    </button>
+                  ))}
+                </>
+              ) : (
+                history.slice(0, 5).map((h, i) => (
+                  <button
+                    key={h.id}
+                    onClick={() => handleChipClick(h.query)}
+                    className="w-full flex items-center justify-between py-2 px-1 hover:bg-[#F5F7FA] rounded-lg transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                      <span className="text-[13px] text-[#344054] group-hover:text-[#0B3558] transition-colors truncate">{h.query}</span>
+                    </div>
+                    <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">{h.timestamp.split(",")[0]}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Recent Documents */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-bold text-[#0B3558] flex items-center gap-2">
+                📄 Recent Documents
+              </h3>
+              <Link href="/history" className="text-[11px] font-semibold text-[#1565C0] hover:underline flex items-center gap-0.5">
+                View All <span>→</span>
+              </Link>
+            </div>
+            <div className="space-y-2.5">
+              {recentDocs.map((doc, i) => (
+                <div key={i} className="flex items-center justify-between py-2 px-1 hover:bg-[#F5F7FA] rounded-lg transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-2.5 overflow-hidden">
+                    <span className={`w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${doc.type === 'pdf' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                      {doc.type.toUpperCase()}
+                    </span>
+                    <span className="text-[13px] text-[#344054] group-hover:text-[#0B3558] transition-colors truncate">{doc.name}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">{doc.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════
+          RICH RESULTS SECTION
+          ═══════════════════════════════════════════ */}
+      {searched && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          
+          {/* Extracted Information Section (Shown only if uploaded doc) */}
+          {extractedData && (
+            <div className="bg-white border border-[#16A34A]/30 rounded-2xl p-8 shadow-sm">
+              <h3 className="text-sm font-bold text-[#16A34A] uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span>📄</span> Extracted Document Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                <div>
+                  <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Product Name</span>
+                  <p className="font-semibold text-[#0B3558]">{extractedData.productName}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Product Description</span>
+                  <p className="font-medium text-[#172033] line-clamp-3">{extractedData.productDescription}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Technical Specifications</span>
+                  <p className="font-medium text-[#172033] line-clamp-3">{extractedData.technicalSpecifications}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 block text-xs uppercase tracking-wide mb-1">Tender Requirements</span>
+                  <p className="font-medium text-[#172033] line-clamp-3">{extractedData.tenderRequirements}</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                 <div><span className="text-gray-500 block mb-0.5">Material:</span> <span className="font-semibold">{extractedData.material}</span></div>
+                 <div><span className="text-gray-500 block mb-0.5">Dimensions:</span> <span className="font-semibold">{extractedData.dimensions}</span></div>
+                 <div><span className="text-gray-500 block mb-0.5">Capacity:</span> <span className="font-semibold">{extractedData.capacity}</span></div>
+                 <div><span className="text-gray-500 block mb-0.5">Voltage:</span> <span className="font-semibold">{extractedData.voltage}</span></div>
+              </div>
+            </div>
+          )}
+
+          {(!results || results.length === 0) ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm">
+              <h3 className="text-xl font-bold text-[#0B3558] mb-2">No matching standard found in the current dataset.</h3>
+              <p className="text-[#667085] mb-4">Try a more specific procurement description, for example:</p>
+              <div className="flex justify-center gap-3">
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm text-[#0B3558]">5 HP water pump</span>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm text-[#0B3558]">TMT steel</span>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm text-[#0B3558]">uPVC pipe</span>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm text-[#0B3558]">solar PV module</span>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* SEARCH ANALYSIS */}
+              <div>
+                <h3 className="text-sm font-bold text-[#667085] uppercase tracking-wider mb-3">Search Analysis</h3>
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-wrap gap-8">
+                  <div>
+                    <span className="text-xs text-gray-500 block mb-1">Query</span>
+                    <span className="font-semibold text-[#0B3558]">{query}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500 block mb-1">Detected Category</span>
+                    <span className="font-semibold text-[#0B3558]">{analysis?.category}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500 block mb-1">Detected Specifications</span>
+                    <span className="font-semibold text-[#0B3558]">{analysis?.specifications}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500 block mb-1">Sector</span>
+                    <span className="font-semibold text-[#16A34A] bg-[#dcfce7] px-2 py-0.5 rounded text-sm">{analysis?.sector}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* RECOMMENDED INDIAN STANDARDS */}
+              <div>
+                <h3 className="text-sm font-bold text-[#667085] uppercase tracking-wider mb-3">Recommended Indian Standards</h3>
+                <div className="grid gap-4">
+                  {results.map((r, i) => (
+                    <div key={r.id || i} className="p-6 rounded-xl bg-white border border-gray-200 hover:border-[#0B3558] hover:shadow-md transition-all duration-300 flex flex-col md:flex-row justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="bg-[#0B3558] text-white text-xs font-bold px-2 py-1 rounded">BIS Standard</span>
+                          <h3 className="text-xl font-bold text-[#0B3558]">{r.isNumber || r.is_number}</h3>
+                          <span className={`px-2.5 py-0.5 rounded text-xs font-bold uppercase ${
+                            (r.verificationStatus === 'verified-reference' || r.status === 'live') ? 'bg-[#16A34A]/10 text-[#16A34A]' : 
+                            'bg-[#F59E0B]/10 text-[#F59E0B]'
+                          }`}>
+                            {r.verificationStatus === 'verified-reference' ? 'Verified Reference' : r.verificationStatus === 'requires-verification' ? 'Requires BIS Verification' : r.status || "Unknown"}
+                          </span>
+                        </div>
+                        <p className="text-[#172033] font-medium mb-1">{r.title || "Standard Specification Document"}</p>
+                        <p className="text-sm text-[#667085] mb-3"><span className="font-semibold text-gray-500">Why this matches:</span> {r.matchReason || r.reason || "Matched via Hybrid NLP Engine based on procurement requirements."}</p>
+                      </div>
+                      <div className="flex flex-col items-end justify-between min-w-[150px]">
+                        <div className="text-right">
+                          <span className="text-xs text-gray-500 block">Confidence</span>
+                          <span className="text-2xl font-bold text-[#F28C18]">{((r.matchScore ?? r.confidence ?? r.score) * 100).toFixed(0)}%</span>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Link href={`/graph?id=${r.isNumber || r.is_number}`} className="text-xs px-3 py-1.5 border border-[#0B3558] text-[#0B3558] rounded hover:bg-[#0B3558] hover:text-white transition-colors">Dependency Graph</Link>
+                          <Link href={`/clause?id=${r.isNumber || r.is_number}`} className="text-xs px-3 py-1.5 bg-[#0B3558] text-white rounded hover:bg-[#092a47] transition-colors">Gen Clause</Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* MATCHING GOVERNMENT TENDERS */}
+              <div>
+                <h3 className="text-sm font-bold text-[#667085] uppercase tracking-wider mb-3">Matching Government Tenders</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {tenders.length === 0 ? (
+                    <div className="col-span-2 p-6 bg-white border border-gray-200 rounded-xl text-center text-gray-500">
+                      No matching tender found in the current dataset.<br/>
+                      Try a broader or more specific procurement description.
+                    </div>
+                  ) : (
+                    tenders.map((t: any, i) => (
+                      <div key={i} className="bg-white border border-gray-200 p-5 rounded-xl shadow-sm flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-bold text-[#0B3558] leading-tight">{t.title}</h4>
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold tracking-wider rounded border border-gray-200 uppercase ml-2 whitespace-nowrap">
+                              {t.dataSource} DATA
+                            </span>
+                          </div>
+                          <p className="text-sm text-[#667085] mb-1"><span className="font-semibold text-gray-500">Org:</span> {t.organization}</p>
+                          <div className="flex justify-between text-xs text-gray-500 mb-2">
+                            <span><span className="font-semibold">Ref:</span> {t.tenderReference || t.ref_number}</span>
+                            <span><span className="font-semibold">Loc:</span> {t.location}</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-500 mb-4">
+                            <span><span className="font-semibold">Category:</span> {t.category}</span>
+                            <span><span className="font-semibold">Closes:</span> {t.closingDate || t.closing_date}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-[#16A34A] font-bold">Match: {t.matchScore || t.match_score}%</span>
+                          </div>
+                          {t.sourceUrl ? (
+                            <a href={t.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#1565C0] hover:underline">View Tender →</a>
+                          ) : (
+                            <span className="text-[10px] text-gray-400 italic">Demo tender — no live source</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* SEARCH SUMMARY */}
+              <div className="bg-[#0B3558] rounded-xl p-5 flex justify-around text-center text-white shadow-md">
+                <div>
+                  <span className="text-xs text-gray-400 block mb-1">Standards Found</span>
+                  <span className="text-2xl font-bold">{results.length}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-400 block mb-1">Tenders Found</span>
+                  <span className="text-2xl font-bold">{tenders.length}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-400 block mb-1">Overall Match Confidence</span>
+                  <span className="text-2xl font-bold text-[#F28C18]">
+                    {results.length > 0 ? ((results[0].confidence ?? results[0].score) * 100).toFixed(0) : 0}%
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          Browse by Product Category
+          ═══════════════════════════════════════════ */}
+      <div className="pt-4">
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-xl font-bold text-[#0B3558] flex items-center gap-2">
+            📊 Browse by Product Category
+          </h2>
+          <Link href="/certification" className="text-sm font-semibold text-[#1565C0] hover:underline flex items-center gap-1">
+            View All Categories <span>→</span>
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {domains.map((domain, i) => (
+            <div
+              key={i}
+              className={`bg-gradient-to-b ${domain.color} border ${domain.border} rounded-xl p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col items-center text-center cursor-pointer group`}
+              onClick={() => handleChipClick(domain.title.split(" ")[0].toLowerCase())}
+            >
+              <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{domain.icon}</div>
+              <h3 className="text-sm font-bold text-[#0B3558] mb-1 leading-tight group-hover:text-[#1565C0] transition-colors">{domain.title}</h3>
+              <p className="text-xs text-[#667085] mb-3">{domain.standards}</p>
+              <span className="text-[#1565C0] font-semibold text-xs flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
+                Explore <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      </div>
+    </div>
+  );
+}

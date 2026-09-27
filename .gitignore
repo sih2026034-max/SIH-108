@@ -1,0 +1,19 @@
+# Node
+node_modules/
+.next/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+backend_venv/
+win_venv/
+env/
+.env
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log

@@ -1,0 +1,7 @@
+{
+  "a": -0.23555520122177973,
+  "b": -0.753609168175037,
+  "is_calibrated": true,
+  "sample_size": 40,
+  "method": "platt_scaling_n40"
+}

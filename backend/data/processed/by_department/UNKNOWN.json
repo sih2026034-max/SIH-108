@@ -1,0 +1,253 @@
+[
+  {
+    "id": "NORM_25797e2f-c8fc-4cad-8c5f-91defbbd6245",
+    "is_number": "",
+    "title": "",
+    "department": "UNKNOWN",
+    "category": null,
+    "scope": "1.1 This standard prescribes the material, constructional, performance and other requirements of multi-crop thresher. 1.2 The standard is applicable to threshers for single crops as well as for multiple crops. NOTES 1 Generally multi-crop threshers have spike tooth type threshing cylinders which are used for threshing multiple crops, such as wheat, oilseeds, pulses, rice, etc. 2 Depending upon the farmers requirements of crops suitable adjustments may be made in the thresher to use it for multiple crops. Additional accessories (concave, sieves and pullies) are supplied to make the adjustments.",
+    "description": null,
+    "keywords": [],
+    "ics_code": "65.060.40",
+    "status": null,
+    "edition": null,
+    "revision": null,
+    "amendments": [],
+    "cross_references": [
+      {
+        "standard_number": "IS 210 : 2009",
+        "title": "Grey iron castings - Specification (fifth revision)"
+      },
+      {
+        "standard_number": "IS 1570 (Part 2/Sec 2) : 1987",
+        "title": "Schedules for wrought steels: Part 2 Carbon steels (unalloyed steels), Section 2 Carbon steel wires with related properties (first revision)"
+      },
+      {
+        "standard_number": "IS 2062 (Part 1) : 2025",
+        "title": "Structural steel: Part 1 Hot rolled medium and high tensile steel (eight revision)"
+      },
+      {
+        "standard_number": "IS 2591 : 1982",
+        "title": "Dimensions for hot rolled steel bars for threaded components (second revision)"
+      },
+      {
+        "standard_number": "IS 2720 (Part 5) : 1985",
+        "title": "Methods of test for soils: Part 5 Determination of liquid and plastic limit (second revision)"
+      },
+      {
+        "standard_number": "IS 6284 : 2026",
+        "title": "Multi-crop thresher - Test code (third revision)"
+      },
+      {
+        "standard_number": "IS 7201 (Part 1) : 1987",
+        "title": "Methods of sampling for agricultural machinery and equipment: Part 1 Handtools and hand - operated/Animal drawn equipment (first revision)"
+      },
+      {
+        "standard_number": "IS B9020 : 2002",
+        "title": "Power threshers - Safety requirements (first revision)"
+      }
+    ],
+    "normative_references": [],
+    "related_standards": [],
+    "test_standards": [],
+    "safety_standards": [],
+    "installation_standards": [],
+    "certification_requirements": [],
+    "source_file": "master_department_wise.json",
+    "source_record_id": "25797e2f-c8fc-4cad-8c5f-91defbbd6245",
+    "search_text": "UNKNOWN UNKNOWN 1.1 This standard prescribes the material, constructional, performance and other requirements of multi-crop thresher. 1.2 The standard is applicable to threshers for single crops as well as for multiple crops. NOTES 1 Generally multi-crop threshers have spike tooth type threshing cylinders which are used for threshing multiple crops, such as wheat, oilseeds, pulses, rice, etc. 2 Depending upon the farmers requirements of crops suitable adjustments may be made in the thresher to use it for multiple crops. Additional accessories (concave, sieves and pullies) are supplied to make the adjustments. 65.060.40",
+    "data_completeness": 21.05
+  },
+  {
+    "id": "NORM_d9f71439-8d83-4d1c-9ef1-c18bdebfe52c",
+    "is_number": "",
+    "title": "",
+    "department": "UNKNOWN",
+    "category": null,
+    "scope": "This standard prescribes the requirements and the method of sampling and test for zirconium powder for use in explosive and pyrotechnic industry.",
+    "description": null,
+    "keywords": [],
+    "ics_code": "71.100.30",
+    "status": null,
+    "edition": null,
+    "revision": null,
+    "amendments": [],
+    "cross_references": [
+      {
+        "standard_number": "IS 264 : 2005",
+        "title": "Nitric acid - Specification (third revision)"
+      },
+      {
+        "standard_number": "IS 1070 : 2023",
+        "title": "Reagent grade water - Specification (fourth revision)"
+      },
+      {
+        "standard_number": "IS 4905 : 2015/ISO 24153 : 2009",
+        "title": "Random sampling and randomization procedures (first revision)"
+      }
+    ],
+    "normative_references": [],
+    "related_standards": [],
+    "test_standards": [],
+    "safety_standards": [],
+    "installation_standards": [],
+    "certification_requirements": [],
+    "source_file": "master_department_wise.json",
+    "source_record_id": "d9f71439-8d83-4d1c-9ef1-c18bdebfe52c",
+    "search_text": "UNKNOWN UNKNOWN This standard prescribes the requirements and the method of sampling and test for zirconium powder for use in explosive and pyrotechnic industry. 71.100.30",
+    "data_completeness": 21.05
+  },
+  {
+    "id": "NORM_e432867d-34e4-4dca-97a2-2c2d5650c703",
+    "is_number": "",
+    "title": "",
+    "department": "UNKNOWN",
+    "category": null,
+    "scope": "This standard prescribes requirements and the methods of sampling and test for ammonium nitrate (AN) intended primarily for use in explosives.",
+    "description": null,
+    "keywords": [],
+    "ics_code": "71.100.30",
+    "status": null,
+    "edition": null,
+    "revision": null,
+    "amendments": [],
+    "cross_references": [
+      {
+        "standard_number": "IS 264 : 2005",
+        "title": "Nitric acid - Specification (third revision)"
+      },
+      {
+        "standard_number": "IS 1070 : 2023",
+        "title": "Reagent grade water - Specification (fourth revision)"
+      },
+      {
+        "standard_number": "IS 1460 : 2025",
+        "title": "Automotive diesel fuel - Specification (seventh revision)"
+      },
+      {
+        "standard_number": "IS 2362 : 1993",
+        "title": "Determination of water by karl fischer method - Test method (second revision)"
+      },
+      {
+        "standard_number": "IS 3025",
+        "title": "Methods of sampling and test (physical and chemical) for water and wastewater:"
+      },
+      {
+        "standard_number": "(Part 2) : 2019/ISO 11885 : 2007",
+        "title": "Determination of selected elements by inductively coupled plasma optical emission spectrometry (ICP-OES) (first revision)"
+      },
+      {
+        "standard_number": "(Part 65) : 2025/ISO 17294-2 : 2023",
+        "title": "Application of inductively coupled plasma mass spectrometry (ICP-MS) - Determination of selected elements including uranium isotopes (second revision)"
+      },
+      {
+        "standard_number": "IS 13320 : 1992",
+        "title": "Determination of iron by atomic absorption spectrophotometry - Test method"
+      }
+    ],
+    "normative_references": [],
+    "related_standards": [],
+    "test_standards": [],
+    "safety_standards": [],
+    "installation_standards": [],
+    "certification_requirements": [],
+    "source_file": "master_department_wise.json",
+    "source_record_id": "e432867d-34e4-4dca-97a2-2c2d5650c703",
+    "search_text": "UNKNOWN UNKNOWN This standard prescribes requirements and the methods of sampling and test for ammonium nitrate (AN) intended primarily for use in explosives. 71.100.30",
+    "data_completeness": 21.05
+  },
+  {
+    "id": "NORM_59aa9efa-ee55-47d4-ba98-3df1740fb36e",
+    "is_number": "",
+    "title": "",
+    "department": "UNKNOWN",
+    "category": null,
+    "scope": "This standard (Part 6) prescribes the methods for determination of moisture and impurities namely, biuret, free acidity, arsenic, calcium nitrate, fluorine, nickel, chromium and sodium in fertilizers and fertilizer mixtures.",
+    "description": null,
+    "keywords": [],
+    "ics_code": "65.080",
+    "status": null,
+    "edition": null,
+    "revision": null,
+    "amendments": [],
+    "cross_references": [
+      {
+        "standard_number": "IS 323 : 2009",
+        "title": "Rectified spirit for industrial use - Specification (second revision)"
+      },
+      {
+        "standard_number": "IS 336 : 2021",
+        "title": "Ether - Specification (third revision)"
+      },
+      {
+        "standard_number": "IS 1070 : 2023",
+        "title": "Reagent grade water - Specification (fourth revision)"
+      },
+      {
+        "standard_number": "IS 6092",
+        "title": "Methods of sampling and test for fertilizers:"
+      },
+      {
+        "standard_number": "(Part 1) : 1985",
+        "title": "Sampling (first revision)"
+      },
+      {
+        "standard_number": "(Part 5) : 1985",
+        "title": "Determination of secondary elements and micronutrients (first revision)"
+      }
+    ],
+    "normative_references": [],
+    "related_standards": [],
+    "test_standards": [],
+    "safety_standards": [],
+    "installation_standards": [],
+    "certification_requirements": [],
+    "source_file": "master_department_wise.json",
+    "source_record_id": "59aa9efa-ee55-47d4-ba98-3df1740fb36e",
+    "search_text": "UNKNOWN UNKNOWN This standard (Part 6) prescribes the methods for determination of moisture and impurities namely, biuret, free acidity, arsenic, calcium nitrate, fluorine, nickel, chromium and sodium in fertilizers and fertilizer mixtures. 65.080",
+    "data_completeness": 21.05
+  },
+  {
+    "id": "NORM_c1955749-ebcb-4758-9186-491846ba7106",
+    "is_number": "",
+    "title": "",
+    "department": "UNKNOWN",
+    "category": null,
+    "scope": "This standard prescribes the apparatus and the method for calibrating liquid-in-glass thermometers of total and partial immersion types.",
+    "description": null,
+    "keywords": [],
+    "ics_code": "17.200.20",
+    "status": null,
+    "edition": null,
+    "revision": null,
+    "amendments": [],
+    "cross_references": [
+      {
+        "standard_number": "IS 1382 : 1981",
+        "title": "Glossary of terms relating to glass and glassware (first revision)"
+      },
+      {
+        "standard_number": "IS 2053 : 1974",
+        "title": "Specification for thermocouple pyrometers (first revision)"
+      },
+      {
+        "standard_number": "IS 2627 : 2026",
+        "title": "Liquid-in-Glass thermometers - Glossary (second revision)"
+      },
+      {
+        "standard_number": "IS 4825 : 2026",
+        "title": "Liquid-in-Glass solid-stem reference thermometers - Specification (second revision)"
+      }
+    ],
+    "normative_references": [],
+    "related_standards": [],
+    "test_standards": [],
+    "safety_standards": [],
+    "installation_standards": [],
+    "certification_requirements": [],
+    "source_file": "master_department_wise.json",
+    "source_record_id": "c1955749-ebcb-4758-9186-491846ba7106",
+    "search_text": "UNKNOWN UNKNOWN This standard prescribes the apparatus and the method for calibrating liquid-in-glass thermometers of total and partial immersion types. 17.200.20",
+    "data_completeness": 21.05
+  }
+]

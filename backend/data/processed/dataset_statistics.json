@@ -1,0 +1,36 @@
+{
+  "total_standards": 12494,
+  "total_departments": 17,
+  "departments": {
+    "LITD": 1220,
+    "MTD": 755,
+    "MHD": 1238,
+    "CED": 939,
+    "TXD": 753,
+    "PCD": 671,
+    "FAD": 1244,
+    "CHD": 959,
+    "PGD": 1498,
+    "ETD": 1236,
+    "MED": 731,
+    "WRD": 226,
+    "AYD": 339,
+    "MSD": 399,
+    "EED": 108,
+    "SSD": 173,
+    "UNKNOWN": 5
+  },
+  "field_completeness": {
+    "is_number": 12489,
+    "title": 12494,
+    "scope": 641,
+    "description": 0,
+    "keywords": 0,
+    "ics_code": 2923,
+    "cross_references": 427,
+    "status": 0,
+    "edition": 12487
+  },
+  "duplicates": 0,
+  "processable_records": 12494
+}

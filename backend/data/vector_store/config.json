@@ -1,0 +1,1 @@
+{"model_name": "intfloat/multilingual-e5-base", "dimension": 768, "metric": "cosine", "index_type": "IndexFlatIP", "indexed_records": 12494}

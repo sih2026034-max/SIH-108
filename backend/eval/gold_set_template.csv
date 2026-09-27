@@ -1,0 +1,11 @@
+query_text,language,correct_is_number,source_category,notes
+"5 HP submersible pump for borewell",en,IS 8034:2018,GeM_Pumps,Vocabulary mismatch check
+"सीमेंट 43 ग्रेड",hi,IS 269:2015,CPPP_Construction,Hindi query for OPC 43 grade
+"तीन फेज वाली मोटर",hi,IS 325:2020,CPPP_Electrical,Hindi query for three phase induction motor
+"PPE kit for hospital staff",en,IS 17423:2020,GeM_Medical,Common term to technical nomenclature
+"High tensile steel structural",en,IS 2062:2011,CPPP_Construction,Standard retrieval test
+"पीने के पानी का पाइप",hi,IS 4984:2016,CPPP_Pipes,Hindi query for HDPE water pipes
+"LED street light fixture",en,IS 16107 (Part 2/Sec 1):2012,GeM_Lighting,Complex IS part/section number
+"PVC cable for house wiring 1 sq mm",en,IS 694:2010,GeM_Cables,Wire sizing specification test
+"रबर के दस्ताने",hi,IS 4770:1991,CPPP_Safety,Hindi query for rubber gloves
+"TMT bar Fe 500D",en,IS 1786:2008,CPPP_Construction,Specific grade in query
