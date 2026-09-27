@@ -12,7 +12,7 @@ except ImportError:
     print("Warning: faiss-cpu not found or failed to load. Will use lexical fallback.")
 
 VECTOR_DIR = "data/vector_store"
-MODEL_NAME = "intfloat/multilingual-e5-base"
+MODEL_NAME = "all-MiniLM-L6-v2"
 
 class VectorSearchService:
     def __init__(self):
