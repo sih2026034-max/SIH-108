@@ -55,39 +55,51 @@ class VectorSearchService:
         if top_k <= 0 or top_k > 100:
             raise ValueError("Invalid top_k")
             
-        # Fallback to lexical if AI model failed to load (for Render free tier OOM issues)
-        if not self.is_loaded or self.model is None:
+        # Fallback to lexical if AI model failed to load or metadata is missing
+        if not self.is_loaded or self.model is None or not self.metadata:
             results = []
             q_lower = query.lower()
             q_words = [w for w in q_lower.split() if len(w) > 3]
-            for i, meta in enumerate(self.metadata):
+            
+            # Direct read from master DB
+            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "db", "master_department_wise.json")
+            all_stds = []
+            try:
+                import json
+                with open(db_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    for dept, stds in data.items():
+                        all_stds.extend(stds)
+            except:
+                pass
+                
+            for i, meta in enumerate(all_stds):
                 score = 0.0
                 title = str(meta.get("title", "")).lower()
-                desc = str(meta.get("category", "")).lower()
+                desc = str(meta.get("department_name", "")).lower()
                 if q_lower in title: score += 0.8
                 if q_lower in desc: score += 0.5
                 for word in q_words:
                     if word in title: score += 0.3
                 if score > 0:
-                    results.append((score, i))
+                    results.append((score, meta))
             
             results.sort(reverse=True, key=lambda x: x[0])
             out = []
-            for score, idx in results[:top_k]:
-                meta = self.metadata[idx]
+            for score, meta in results[:top_k]:
                 out.append({
                     "rank": len(out) + 1,
-                    "is_number": meta.get("is_number"),
+                    "is_number": meta.get("standard_number"),
                     "title": meta.get("title"),
-                    "department": meta.get("department"),
-                    "category": meta.get("category"),
+                    "department": meta.get("department_name"),
+                    "category": meta.get("standard_type", "Product"),
                     "similarity_score": round(score, 4) if score < 1 else 0.95,
-                    "source_record_id": meta.get("source_record_id"),
-                    "source_file": meta.get("source_file"),
-                    "id": meta.get("id")
+                    "source_record_id": meta.get("bis_id"),
+                    "source_file": meta.get("preview_url"),
+                    "id": meta.get("normalized_id")
                 })
-            if not out: # If no lexical match, return dummy to prevent crash
-                return [{"rank": 1, "is_number": "IS 1234 : 2020", "title": f"Standard for {query}", "category": "General", "similarity_score": 0.8}]
+            if not out:
+                return [{"rank": 1, "is_number": "N/A", "title": f"No matches found for {query}", "category": "General", "similarity_score": 0.0}]
             return out
             
         # For E5 queries
