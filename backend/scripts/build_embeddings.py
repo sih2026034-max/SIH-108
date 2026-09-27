@@ -7,7 +7,7 @@ import time
 
 DATA_FILE = "data/processed/normalized_standards.json"
 VECTOR_DIR = "data/vector_store"
-MODEL_NAME = "intfloat/multilingual-e5-base"
+MODEL_NAME = "all-MiniLM-L6-v2"
 
 def ensure_dir(path):
     if not os.path.exists(path):
